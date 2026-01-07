@@ -323,17 +323,69 @@
                             orderInfo.orderingProvider = orcFields[12] || 'N/A';
                         }
 
-                        let visitInfo = {};
+                        // Parse Patient Visit (PV1) - COMPLETE
+                        let visitInfo = {
+                            patientClass: 'O',
+                            assignedLocation: '^^^&',
+                            admissionType: 'N/A',
+                            attendingDoctor: 'N/A',
+                            visitNumber: 'N/A',
+                            dischargeDisposition: 'N/A'
+                        };
+                        
                         if (pv1Segment) {
                             const fields = pv1Segment.split('|');
+                            console.log('PV1 segment found:', pv1Segment);
+                            console.log('PV1 fields:', fields);
+                            
                             visitInfo = {
                                 patientClass: fields[2] || 'O',
-                                assignedLocation: fields[3] || 'N/A',
+                                assignedLocation: fields[3] || '^^^&',
                                 admissionType: fields[4] || 'N/A',
+                                preadmitNumber: fields[5] || 'N/A',
+                                priorPatientLocation: fields[6] || 'N/A',
                                 attendingDoctor: fields[7] || 'N/A',
+                                referringDoctor: fields[8] || 'N/A',
+                                consultingDoctor: fields[9] || 'N/A',
+                                hospitalService: fields[10] || 'N/A',
+                                temporaryLocation: fields[11] || 'N/A',
+                                preadmitTestIndicator: fields[12] || 'N/A',
+                                readmissionIndicator: fields[13] || 'N/A',
+                                admitSource: fields[14] || 'N/A',
+                                ambulatoryStatus: fields[15] || 'N/A',
+                                vipIndicator: fields[16] || 'N/A',
+                                admittingDoctor: fields[17] || 'N/A',
+                                patientType: fields[18] || 'N/A',
                                 visitNumber: fields[19] || 'N/A',
-                                dischargeDisposition: fields[36] || 'N/A'
+                                financialClass: fields[20] || 'N/A',
+                                chargePriceIndicator: fields[21] || 'N/A',
+                                courtesyCode: fields[22] || 'N/A',
+                                creditRating: fields[23] || 'N/A',
+                                contractCode: fields[24] || 'N/A',
+                                contractEffectiveDate: fields[25] || 'N/A',
+                                contractAmount: fields[26] || 'N/A',
+                                contractPeriod: fields[27] || 'N/A',
+                                interestCode: fields[28] || 'N/A',
+                                transferToBadDebtCode: fields[29] || 'N/A',
+                                transferToBadDebtDate: fields[30] || 'N/A',
+                                badDebtAgencyCode: fields[31] || 'N/A',
+                                badDebtTransferAmount: fields[32] || 'N/A',
+                                badDebtRecoveryAmount: fields[33] || 'N/A',
+                                deleteAccountIndicator: fields[34] || 'N/A',
+                                deleteAccountDate: fields[35] || 'N/A',
+                                dischargeDisposition: fields[36] || 'N/A',
+                                dischargedToLocation: fields[37] || 'N/A',
+                                dietType: fields[38] || 'N/A',
+                                servicingFacility: fields[39] || 'N/A',
+                                bedStatus: fields[40] || 'N/A',
+                                accountStatus: fields[41] || 'N/A',
+                                pendingLocation: fields[42] || 'N/A',
+                                priorTemporaryLocation: fields[43] || 'N/A',
+                                admitDateTime: fields[44] || 'N/A',
+                                dischargeDateTime: fields[45] || 'N/A'
                             };
+                        } else {
+                            console.log('No PV1 segment found in HL7');
                         }
 
                         let insuranceInfo = {};
@@ -413,7 +465,19 @@
                     
                     hl7Result += 'MSH|^~\\&|' + (orderInfo.receivingFacility || 'TempsLab') + '|' + (orderInfo.sendingFacility || '73929332') + '||LightningStep|' + resultDateTime + '||ORU^R01|' + controlId + '|P|' + version + '\r\n';
                     hl7Result += 'PID|1|' + patientInfo.mrn + '|' + patientInfo.mrn + '||' + patientInfo.lastName + '^' + patientInfo.firstName + '||' + patientInfo.birthDate + '|' + patientInfo.gender + '\r\n';
-                    hl7Result += 'PV1|1|O|^^^&\r\n';
+                    
+                    // Generate PV1 with real visit information instead of hardcoded values
+                    const visitInfo = uploadedOrder.visitInfo || {};
+                    hl7Result += 'PV1|1|' + (visitInfo.patientClass || 'O') + '|' + (visitInfo.assignedLocation || '^^^&') + 
+                                 '|' + (visitInfo.admissionType || '') + 
+                                 '|' + (visitInfo.preadmitNumber || '') + 
+                                 '|' + (visitInfo.priorPatientLocation || '') + 
+                                 '|' + (visitInfo.attendingDoctor || '') + 
+                                 '|' + (visitInfo.referringDoctor || '') + 
+                                 '|' + (visitInfo.consultingDoctor || '') + 
+                                 '|' + (visitInfo.hospitalService || '') + 
+                                 '|||||||||' + (visitInfo.visitNumber || '') + 
+                                 '|' + (visitInfo.financialClass || '') + '\r\n';
                     
                     for (let i = 0; i < labTests.length; i++) {
                         const test = labTests[i];
@@ -502,6 +566,14 @@
                     const currentDateTime = generateESTDateTime();
                     const randomOrderNumber = 'RL' + Math.floor(Math.random() * 900000 + 100000);
                     
+                    // Generate random physician for each test
+                    const physicianFirstNames = ['Francisco', 'Maria', 'Carlos', 'Ana', 'Diego', 'Sofia', 'Miguel', 'Isabella', 'Juan', 'Valentina'];
+                    const physicianLastNames = ['Jaramillo', 'Rodriguez', 'Martinez', 'Garcia', 'Lopez', 'Gonzalez', 'Perez', 'Sanchez', 'Ramirez', 'Torres'];
+                    
+                    const randomPhysicianFirst = physicianFirstNames[Math.floor(Math.random() * physicianFirstNames.length)];
+                    const randomPhysicianLast = physicianLastNames[Math.floor(Math.random() * physicianLastNames.length)];
+                    const randomNPI = '12345678' + Math.floor(Math.random() * 10);
+                    
                     const resultData = {
                         success: true,
                         patientInfo: selectedPatient.patientInfo,
@@ -516,22 +588,58 @@
                             messageType: 'ORM^O01',
                             processingId: 'P',
                             hl7Version: '2.3.1',
-                            physicianNPI: selectedPatient.orderInfo?.physicianNPI || '1234567893',
-                            physicianFirstName: selectedPatient.orderInfo?.physicianFirstName || 'Francisco',
-                            physicianLastName: selectedPatient.orderInfo?.physicianLastName || 'Jaramillo'
+                            physicianNPI: randomNPI,
+                            physicianFirstName: randomPhysicianFirst,
+                            physicianLastName: randomPhysicianLast
                         },
                         visitInfo: selectedPatient.visitInfo || {},
                         insuranceInfo: selectedPatient.insuranceInfo || {},
                         labTests: randomTests
                     };
                     
+                    // Set the data and generate result immediately
                     setUploadedOrder(resultData);
-                    setCurrentModule('loaded-info');
                     
+                    // Generate HL7 result automatically
                     setTimeout(function() {
-                        const result = generateResultHL7();
-                        setGeneratedResult(result);
-                        alert('✅ Random tests generated for original patient!');
+                        const patientInfo = resultData.patientInfo;
+                        const orderInfo = resultData.orderInfo;
+                        const labTests = resultData.labTests;
+                        const resultDateTime = generateESTDateTime();
+                        const controlId = Math.floor(Math.random() * 900000000000000000000) + 100000000000000000000;
+                        const version = resultData.useV23 ? '2.3' : '2.3.1';
+                        
+                        let hl7Result = '';
+                        
+                        hl7Result += 'MSH|^~\\&|' + (orderInfo.receivingFacility || 'TempsLab') + '|' + (orderInfo.sendingFacility || '73929332') + '||LightningStep|' + resultDateTime + '||ORU^R01|' + controlId + '|P|' + version + '\r\n';
+                        hl7Result += 'PID|1|' + patientInfo.mrn + '|' + patientInfo.mrn + '||' + patientInfo.lastName + '^' + patientInfo.firstName + '||' + patientInfo.birthDate + '|' + patientInfo.gender + '\r\n';
+                        
+                        const visitInfo = resultData.visitInfo || {};
+                        hl7Result += 'PV1|1|' + (visitInfo.patientClass || 'O') + '|' + (visitInfo.assignedLocation || '^^^&') + 
+                                     '|' + (visitInfo.admissionType || '') + 
+                                     '|' + (visitInfo.preadmitNumber || '') + 
+                                     '|' + (visitInfo.priorPatientLocation || '') + 
+                                     '|' + (visitInfo.attendingDoctor || '') + 
+                                     '|' + (visitInfo.referringDoctor || '') + 
+                                     '|' + (visitInfo.consultingDoctor || '') + 
+                                     '|' + (visitInfo.hospitalService || '') + 
+                                     '|||||||||' + (visitInfo.visitNumber || '') + 
+                                     '|' + (visitInfo.financialClass || '') + '\r\n';
+                        
+                        for (let i = 0; i < labTests.length; i++) {
+                            const test = labTests[i];
+                            const accessionNumber = resultDateTime.substring(0, 8) + '-' + String(test.sequence).padStart(2, '0');
+                            hl7Result += 'ORC|RE|' + orderInfo.orderNumber + '|' + accessionNumber + '||CM||||' + resultDateTime + '\r\n';
+                            hl7Result += 'OBR|' + test.sequence + '|' + orderInfo.orderNumber + '|' + accessionNumber + '|' + test.code + '^' + test.name + '|||||' + resultDateTime + '|' + resultDateTime + '\r\n';
+                            
+                            for (let j = 0; j < test.results.length; j++) {
+                                const result = test.results[j];
+                                hl7Result += 'OBX|' + (j + 1) + '|NM|' + result.code + '^' + result.name + '|' + (j + 1) + '|' + result.value + '|' + result.unit + '|' + result.range + '|' + result.status + '|||F|||' + resultDateTime + '\r\n';
+                            }
+                        }
+                        
+                        setGeneratedResult(hl7Result);
+                        alert('✅ Random tests with random provider generated and HL7 result created!');
                     }, 100);
                 }
 
@@ -545,6 +653,14 @@
                     const states = ['CA', 'NY', 'TX', 'FL', 'WA', 'OR', 'AZ', 'NV', 'CO', 'UT'];
                     const cities = ['Springfield', 'Franklin', 'Georgetown', 'Madison', 'Riverside', 'Fairview', 'Salem', 'Bristol'];
                     const streets = ['Main St', 'Oak Ave', 'Pine Rd', 'Cedar Ln', 'Maple Dr', 'Elm St', 'First St', 'Second Ave'];
+                    
+                    // Generate random physician
+                    const physicianFirstNames = ['Francisco', 'Maria', 'Carlos', 'Ana', 'Diego', 'Sofia', 'Miguel', 'Isabella', 'Juan', 'Valentina'];
+                    const physicianLastNames = ['Jaramillo', 'Rodriguez', 'Martinez', 'Garcia', 'Lopez', 'Gonzalez', 'Perez', 'Sanchez', 'Ramirez', 'Torres'];
+                    
+                    const randomPhysicianFirst = physicianFirstNames[Math.floor(Math.random() * physicianFirstNames.length)];
+                    const randomPhysicianLast = physicianLastNames[Math.floor(Math.random() * physicianLastNames.length)];
+                    const randomNPI = '12345678' + Math.floor(Math.random() * 10);
                     
                     const randomPatientInfo = {
                         firstName: selectedPatient.patientInfo.firstName,
@@ -583,22 +699,58 @@
                             messageType: 'ORM^O01',
                             processingId: 'P',
                             hl7Version: '2.3.1',
-                            physicianNPI: '1234567893',
-                            physicianFirstName: 'Francisco',
-                            physicianLastName: 'Jaramillo'
+                            physicianNPI: randomNPI,
+                            physicianFirstName: randomPhysicianFirst,
+                            physicianLastName: randomPhysicianLast
                         },
                         visitInfo: { patientClass: 'O' },
                         insuranceInfo: {},
                         labTests: randomTests
                     };
                     
+                    // Set the data and generate result immediately
                     setUploadedOrder(resultData);
-                    setCurrentModule('loaded-info');
                     
+                    // Generate HL7 result automatically
                     setTimeout(function() {
-                        const result = generateResultHL7();
-                        setGeneratedResult(result);
-                        alert('✅ Name+DOB only generated!');
+                        const patientInfo = resultData.patientInfo;
+                        const orderInfo = resultData.orderInfo;
+                        const labTests = resultData.labTests;
+                        const resultDateTime = generateESTDateTime();
+                        const controlId = Math.floor(Math.random() * 900000000000000000000) + 100000000000000000000;
+                        const version = resultData.useV23 ? '2.3' : '2.3.1';
+                        
+                        let hl7Result = '';
+                        
+                        hl7Result += 'MSH|^~\\&|' + (orderInfo.receivingFacility || 'TempsLab') + '|' + (orderInfo.sendingFacility || '73929332') + '||LightningStep|' + resultDateTime + '||ORU^R01|' + controlId + '|P|' + version + '\r\n';
+                        hl7Result += 'PID|1|' + patientInfo.mrn + '|' + patientInfo.mrn + '||' + patientInfo.lastName + '^' + patientInfo.firstName + '||' + patientInfo.birthDate + '|' + patientInfo.gender + '\r\n';
+                        
+                        const visitInfo = resultData.visitInfo || {};
+                        hl7Result += 'PV1|1|' + (visitInfo.patientClass || 'O') + '|' + (visitInfo.assignedLocation || '^^^&') + 
+                                     '|' + (visitInfo.admissionType || '') + 
+                                     '|' + (visitInfo.preadmitNumber || '') + 
+                                     '|' + (visitInfo.priorPatientLocation || '') + 
+                                     '|' + (visitInfo.attendingDoctor || '') + 
+                                     '|' + (visitInfo.referringDoctor || '') + 
+                                     '|' + (visitInfo.consultingDoctor || '') + 
+                                     '|' + (visitInfo.hospitalService || '') + 
+                                     '|||||||||' + (visitInfo.visitNumber || '') + 
+                                     '|' + (visitInfo.financialClass || '') + '\r\n';
+                        
+                        for (let i = 0; i < labTests.length; i++) {
+                            const test = labTests[i];
+                            const accessionNumber = resultDateTime.substring(0, 8) + '-' + String(test.sequence).padStart(2, '0');
+                            hl7Result += 'ORC|RE|' + orderInfo.orderNumber + '|' + accessionNumber + '||CM||||' + resultDateTime + '\r\n';
+                            hl7Result += 'OBR|' + test.sequence + '|' + orderInfo.orderNumber + '|' + accessionNumber + '|' + test.code + '^' + test.name + '|||||' + resultDateTime + '|' + resultDateTime + '\r\n';
+                            
+                            for (let j = 0; j < test.results.length; j++) {
+                                const result = test.results[j];
+                                hl7Result += 'OBX|' + (j + 1) + '|NM|' + result.code + '^' + result.name + '|' + (j + 1) + '|' + result.value + '|' + result.unit + '|' + result.range + '|' + result.status + '|||F|||' + resultDateTime + '\r\n';
+                            }
+                        }
+                        
+                        setGeneratedResult(hl7Result);
+                        alert('✅ Name+DOB with random provider generated and HL7 result created!');
                     }, 100);
                 }
 
@@ -611,6 +763,14 @@
                     
                     const originalName = selectedPatient.patientInfo.firstName + ' ' + selectedPatient.patientInfo.lastName;
                     const randomDemo = generateRandomDemographics(originalName);
+                    
+                    // Generate random physician
+                    const physicianFirstNames = ['Francisco', 'Maria', 'Carlos', 'Ana', 'Diego', 'Sofia', 'Miguel', 'Isabella', 'Juan', 'Valentina'];
+                    const physicianLastNames = ['Jaramillo', 'Rodriguez', 'Martinez', 'Garcia', 'Lopez', 'Gonzalez', 'Perez', 'Sanchez', 'Ramirez', 'Torres'];
+                    
+                    const randomPhysicianFirst = physicianFirstNames[Math.floor(Math.random() * physicianFirstNames.length)];
+                    const randomPhysicianLast = physicianLastNames[Math.floor(Math.random() * physicianLastNames.length)];
+                    const randomNPI = '12345678' + Math.floor(Math.random() * 10);
                     
                     const resultData = {
                         success: true,
@@ -626,22 +786,58 @@
                             messageType: 'ORM^O01',
                             processingId: 'P',
                             hl7Version: '2.3.1',
-                            physicianNPI: '1234567893',
-                            physicianFirstName: 'Francisco',
-                            physicianLastName: 'Jaramillo'
+                            physicianNPI: randomNPI,
+                            physicianFirstName: randomPhysicianFirst,
+                            physicianLastName: randomPhysicianLast
                         },
                         visitInfo: { patientClass: 'O' },
                         insuranceInfo: {},
                         labTests: randomTests
                     };
                     
+                    // Set the data and generate result immediately
                     setUploadedOrder(resultData);
-                    setCurrentModule('loaded-info');
                     
+                    // Generate HL7 result automatically
                     setTimeout(function() {
-                        const result = generateResultHL7();
-                        setGeneratedResult(result);
-                        alert('✅ Random demographics v2.3.1 generated!');
+                        const patientInfo = resultData.patientInfo;
+                        const orderInfo = resultData.orderInfo;
+                        const labTests = resultData.labTests;
+                        const resultDateTime = generateESTDateTime();
+                        const controlId = Math.floor(Math.random() * 900000000000000000000) + 100000000000000000000;
+                        const version = resultData.useV23 ? '2.3' : '2.3.1';
+                        
+                        let hl7Result = '';
+                        
+                        hl7Result += 'MSH|^~\\&|' + (orderInfo.receivingFacility || 'TempsLab') + '|' + (orderInfo.sendingFacility || '73929332') + '||LightningStep|' + resultDateTime + '||ORU^R01|' + controlId + '|P|' + version + '\r\n';
+                        hl7Result += 'PID|1|' + patientInfo.mrn + '|' + patientInfo.mrn + '||' + patientInfo.lastName + '^' + patientInfo.firstName + '||' + patientInfo.birthDate + '|' + patientInfo.gender + '\r\n';
+                        
+                        const visitInfo = resultData.visitInfo || {};
+                        hl7Result += 'PV1|1|' + (visitInfo.patientClass || 'O') + '|' + (visitInfo.assignedLocation || '^^^&') + 
+                                     '|' + (visitInfo.admissionType || '') + 
+                                     '|' + (visitInfo.preadmitNumber || '') + 
+                                     '|' + (visitInfo.priorPatientLocation || '') + 
+                                     '|' + (visitInfo.attendingDoctor || '') + 
+                                     '|' + (visitInfo.referringDoctor || '') + 
+                                     '|' + (visitInfo.consultingDoctor || '') + 
+                                     '|' + (visitInfo.hospitalService || '') + 
+                                     '|||||||||' + (visitInfo.visitNumber || '') + 
+                                     '|' + (visitInfo.financialClass || '') + '\r\n';
+                        
+                        for (let i = 0; i < labTests.length; i++) {
+                            const test = labTests[i];
+                            const accessionNumber = resultDateTime.substring(0, 8) + '-' + String(test.sequence).padStart(2, '0');
+                            hl7Result += 'ORC|RE|' + orderInfo.orderNumber + '|' + accessionNumber + '||CM||||' + resultDateTime + '\r\n';
+                            hl7Result += 'OBR|' + test.sequence + '|' + orderInfo.orderNumber + '|' + accessionNumber + '|' + test.code + '^' + test.name + '|||||' + resultDateTime + '|' + resultDateTime + '\r\n';
+                            
+                            for (let j = 0; j < test.results.length; j++) {
+                                const result = test.results[j];
+                                hl7Result += 'OBX|' + (j + 1) + '|NM|' + result.code + '^' + result.name + '|' + (j + 1) + '|' + result.value + '|' + result.unit + '|' + result.range + '|' + result.status + '|||F|||' + resultDateTime + '\r\n';
+                            }
+                        }
+                        
+                        setGeneratedResult(hl7Result);
+                        alert('✅ Random demographics v2.3.1 with random provider generated and HL7 result created!');
                     }, 100);
                 }
 
@@ -654,6 +850,14 @@
                     
                     const originalName = selectedPatient.patientInfo.firstName + ' ' + selectedPatient.patientInfo.lastName;
                     const randomDemo = generateRandomDemographics(originalName);
+                    
+                    // Generate random physician
+                    const physicianFirstNames = ['Francisco', 'Maria', 'Carlos', 'Ana', 'Diego', 'Sofia', 'Miguel', 'Isabella', 'Juan', 'Valentina'];
+                    const physicianLastNames = ['Jaramillo', 'Rodriguez', 'Martinez', 'Garcia', 'Lopez', 'Gonzalez', 'Perez', 'Sanchez', 'Ramirez', 'Torres'];
+                    
+                    const randomPhysicianFirst = physicianFirstNames[Math.floor(Math.random() * physicianFirstNames.length)];
+                    const randomPhysicianLast = physicianLastNames[Math.floor(Math.random() * physicianLastNames.length)];
+                    const randomNPI = '12345678' + Math.floor(Math.random() * 10);
                     
                     const resultData = {
                         success: true,
@@ -669,9 +873,9 @@
                             messageType: 'ORM^O01',
                             processingId: 'P',
                             hl7Version: '2.3',
-                            physicianNPI: '1234567893',
-                            physicianFirstName: 'Francisco',
-                            physicianLastName: 'Jaramillo'
+                            physicianNPI: randomNPI,
+                            physicianFirstName: randomPhysicianFirst,
+                            physicianLastName: randomPhysicianLast
                         },
                         visitInfo: { patientClass: 'O' },
                         insuranceInfo: {},
@@ -679,13 +883,49 @@
                         useV23: true
                     };
                     
+                    // Set the data and generate result immediately
                     setUploadedOrder(resultData);
-                    setCurrentModule('loaded-info');
                     
+                    // Generate HL7 result automatically
                     setTimeout(function() {
-                        const result = generateResultHL7();
-                        setGeneratedResult(result);
-                        alert('✅ Random demographics v2.3 generated!');
+                        const patientInfo = resultData.patientInfo;
+                        const orderInfo = resultData.orderInfo;
+                        const labTests = resultData.labTests;
+                        const resultDateTime = generateESTDateTime();
+                        const controlId = Math.floor(Math.random() * 900000000000000000000) + 100000000000000000000;
+                        const version = resultData.useV23 ? '2.3' : '2.3.1';
+                        
+                        let hl7Result = '';
+                        
+                        hl7Result += 'MSH|^~\\&|' + (orderInfo.receivingFacility || 'TempsLab') + '|' + (orderInfo.sendingFacility || '73929332') + '||LightningStep|' + resultDateTime + '||ORU^R01|' + controlId + '|P|' + version + '\r\n';
+                        hl7Result += 'PID|1|' + patientInfo.mrn + '|' + patientInfo.mrn + '||' + patientInfo.lastName + '^' + patientInfo.firstName + '||' + patientInfo.birthDate + '|' + patientInfo.gender + '\r\n';
+                        
+                        const visitInfo = resultData.visitInfo || {};
+                        hl7Result += 'PV1|1|' + (visitInfo.patientClass || 'O') + '|' + (visitInfo.assignedLocation || '^^^&') + 
+                                     '|' + (visitInfo.admissionType || '') + 
+                                     '|' + (visitInfo.preadmitNumber || '') + 
+                                     '|' + (visitInfo.priorPatientLocation || '') + 
+                                     '|' + (visitInfo.attendingDoctor || '') + 
+                                     '|' + (visitInfo.referringDoctor || '') + 
+                                     '|' + (visitInfo.consultingDoctor || '') + 
+                                     '|' + (visitInfo.hospitalService || '') + 
+                                     '|||||||||' + (visitInfo.visitNumber || '') + 
+                                     '|' + (visitInfo.financialClass || '') + '\r\n';
+                        
+                        for (let i = 0; i < labTests.length; i++) {
+                            const test = labTests[i];
+                            const accessionNumber = resultDateTime.substring(0, 8) + '-' + String(test.sequence).padStart(2, '0');
+                            hl7Result += 'ORC|RE|' + orderInfo.orderNumber + '|' + accessionNumber + '||CM||||' + resultDateTime + '\r\n';
+                            hl7Result += 'OBR|' + test.sequence + '|' + orderInfo.orderNumber + '|' + accessionNumber + '|' + test.code + '^' + test.name + '|||||' + resultDateTime + '|' + resultDateTime + '\r\n';
+                            
+                            for (let j = 0; j < test.results.length; j++) {
+                                const result = test.results[j];
+                                hl7Result += 'OBX|' + (j + 1) + '|NM|' + result.code + '^' + result.name + '|' + (j + 1) + '|' + result.value + '|' + result.unit + '|' + result.range + '|' + result.status + '|||F|||' + resultDateTime + '\r\n';
+                            }
+                        }
+                        
+                        setGeneratedResult(hl7Result);
+                        alert('✅ Random demographics v2.3 with random provider generated and HL7 result created!');
                     }, 100);
                 }
 
@@ -942,8 +1182,9 @@
                                     uploadedOrder.visitInfo?.patientClass || 'O (Outpatient)'
                                 ),
                                 React.createElement('div', { className: 'info-item' },
-                                    React.createElement('strong', null, 'Assigned Patient Location: '),
-                                    uploadedOrder.visitInfo?.assignedLocation || 'N/A'
+                                    React.createElement('strong', null, 'Assigned Location: '),
+                                    uploadedOrder.visitInfo?.assignedLocation && uploadedOrder.visitInfo?.assignedLocation !== '^^^&' ? 
+                                        uploadedOrder.visitInfo?.assignedLocation : 'Not specified'
                                 ),
                                 React.createElement('div', { className: 'info-item' },
                                     React.createElement('strong', null, 'Admission Type: '),
@@ -958,8 +1199,32 @@
                                     uploadedOrder.visitInfo?.visitNumber || 'N/A'
                                 ),
                                 React.createElement('div', { className: 'info-item' },
+                                    React.createElement('strong', null, 'Patient Type: '),
+                                    uploadedOrder.visitInfo?.patientType || 'N/A'
+                                ),
+                                React.createElement('div', { className: 'info-item' },
+                                    React.createElement('strong', null, 'Financial Class: '),
+                                    uploadedOrder.visitInfo?.financialClass || 'N/A'
+                                ),
+                                React.createElement('div', { className: 'info-item' },
+                                    React.createElement('strong', null, 'Hospital Service: '),
+                                    uploadedOrder.visitInfo?.hospitalService || 'N/A'
+                                ),
+                                React.createElement('div', { className: 'info-item' },
+                                    React.createElement('strong', null, 'Admit Date/Time: '),
+                                    uploadedOrder.visitInfo?.admitDateTime || 'N/A'
+                                ),
+                                React.createElement('div', { className: 'info-item' },
+                                    React.createElement('strong', null, 'Discharge Date/Time: '),
+                                    uploadedOrder.visitInfo?.dischargeDateTime || 'N/A'
+                                ),
+                                React.createElement('div', { className: 'info-item' },
                                     React.createElement('strong', null, 'Discharge Disposition: '),
                                     uploadedOrder.visitInfo?.dischargeDisposition || 'N/A'
+                                ),
+                                React.createElement('div', { className: 'info-item' },
+                                    React.createElement('strong', null, 'Account Status: '),
+                                    uploadedOrder.visitInfo?.accountStatus || 'N/A'
                                 )
                             )
                         ),
@@ -1120,6 +1385,83 @@
                                 disabled: !selectedPatient,
                                 onClick: onGenerate
                             }, 'Generate Results')
+                        ),
+                        
+                        // Show generated information if uploadedOrder exists and it's from a random module
+                        uploadedOrder && uploadedOrder.orderInfo && uploadedOrder.orderInfo.orderNumber && 
+                        (uploadedOrder.orderInfo.orderNumber.startsWith('RL') || 
+                         uploadedOrder.orderInfo.orderNumber.startsWith('ND') || 
+                         uploadedOrder.orderInfo.orderNumber.startsWith('RD') || 
+                         uploadedOrder.orderInfo.orderNumber.startsWith('R3')) &&
+                        React.createElement('div', { style: { marginTop: '2rem' } },
+                            React.createElement('div', { className: 'info-card', style: { background: '#f0fdf4' } },
+                                React.createElement('h4', { style: { color: '#166534' } }, '✅ Generated Information'),
+                                
+                                // Order Information
+                                React.createElement('div', { style: { background: '#dcfce7', padding: '1rem', borderRadius: '8px', marginBottom: '1rem' } },
+                                    React.createElement('h5', { style: { color: '#166534', marginBottom: '0.5rem' } }, '📋 Generated Order Details'),
+                                    React.createElement('p', { style: { margin: '0.25rem 0' } },
+                                        React.createElement('strong', null, '🆔 Order Number: '),
+                                        uploadedOrder.orderInfo.orderNumber,
+                                        React.createElement('span', { style: { fontSize: '0.875rem', color: '#166534', marginLeft: '0.5rem', fontStyle: 'italic' } },
+                                            uploadedOrder.orderInfo.orderNumber.startsWith('RL') && '(Random Tests)',
+                                            uploadedOrder.orderInfo.orderNumber.startsWith('ND') && '(Name + DOB Only)',
+                                            uploadedOrder.orderInfo.orderNumber.startsWith('RD') && '(Random Demographics v2.3.1)', 
+                                            uploadedOrder.orderInfo.orderNumber.startsWith('R3') && '(Random Demographics v2.3)'
+                                        )
+                                    ),
+                                    React.createElement('p', { style: { margin: '0.25rem 0' } },
+                                        React.createElement('strong', null, '👨‍⚕️ Provider: '),
+                                        'Dr. ' + uploadedOrder.orderInfo.physicianFirstName + ' ' + uploadedOrder.orderInfo.physicianLastName + 
+                                        ' (NPI: ' + uploadedOrder.orderInfo.physicianNPI + ')'
+                                    ),
+                                    React.createElement('p', { style: { margin: '0.25rem 0' } },
+                                        React.createElement('strong', null, '🧪 Tests Generated: '),
+                                        uploadedOrder.labTests.length + ' laboratory test(s)'
+                                    ),
+                                    React.createElement('p', { style: { margin: '0.25rem 0' } },
+                                        React.createElement('strong', null, '📅 Generated: '),
+                                        new Date().toLocaleString()
+                                    )
+                                ),
+                                
+                                // Patient Information Summary
+                                React.createElement('div', { style: { background: '#eff6ff', padding: '1rem', borderRadius: '8px', marginBottom: '1rem' } },
+                                    React.createElement('h5', { style: { color: '#1e40af', marginBottom: '0.5rem' } }, '👤 Patient Information'),
+                                    React.createElement('p', { style: { margin: '0.25rem 0' } },
+                                        React.createElement('strong', null, 'Name: '),
+                                        uploadedOrder.patientInfo.firstName + ' ' + uploadedOrder.patientInfo.lastName
+                                    ),
+                                    React.createElement('p', { style: { margin: '0.25rem 0' } },
+                                        React.createElement('strong', null, 'MRN: '),
+                                        uploadedOrder.patientInfo.mrn
+                                    ),
+                                    React.createElement('p', { style: { margin: '0.25rem 0' } },
+                                        React.createElement('strong', null, 'DOB: '),
+                                        uploadedOrder.patientInfo.birthDate
+                                    ),
+                                    React.createElement('p', { style: { margin: '0.25rem 0' } },
+                                        React.createElement('strong', null, 'Gender: '),
+                                        uploadedOrder.patientInfo.gender
+                                    )
+                                ),
+                                
+                                // Generated Tests Summary
+                                React.createElement('div', { style: { background: '#fffbeb', padding: '1rem', borderRadius: '8px' } },
+                                    React.createElement('h5', { style: { color: '#92400e', marginBottom: '0.5rem' } }, '🧪 Generated Tests'),
+                                    React.createElement('ul', { style: { marginLeft: '1rem' } },
+                                        uploadedOrder.labTests.map(function(test, index) {
+                                            return React.createElement('li', { 
+                                                key: index, 
+                                                style: { marginBottom: '0.25rem', fontSize: '0.875rem' } 
+                                            },
+                                                React.createElement('strong', null, test.code),
+                                                ': ' + test.name + ' (' + test.results.length + ' result(s))'
+                                            );
+                                        })
+                                    )
+                                )
+                            )
                         )
                     );
                 }
